@@ -34,7 +34,27 @@ public class Main {
             System.out.println("\nLogin successful!");
             System.out.println("Welcome, " + loggedInUser.getDisplayName());
             showWelcome(loggedInUser);
+            while(true){
+                System.out.println("\n=== Main Menu ===");
+                System.out.println("1. Create, Edit & View Journals");
+                System.out.println("2. View Weekly Mood Summary");
+                System.out.println("3. Logout");
+                System.out.print("> ");
 
+                String choice = scanner.nextLine();
+                if (choice.equals("1")){
+                    System.out.println("Journal menu(to be implemented)");
+                }else if(choice.equals("2")){
+                    System.out.println("Weekly mood summary(to be implemented)");
+                }else if(choice.equals("3")){
+                    System.out.println("Logged out. Goodbye!");
+                    break;
+                }
+                else{
+                      System.out.println("Invalid option. Please try again.");
+                }
+            }
+            
             File journalFile = userManager.getJournalFile(loggedInUser);
             System.out.println("Journal file ready: " + journalFile.getPath());
             System.out.print("\nWrite your journal entry: ");
