@@ -47,7 +47,7 @@ public class Main {
                 if (choice.equals("1")){
                     journalMenu(loggedInUser, userManager, scanner);
                 }else if(choice.equals("2")){
-                    System.out.println("Weekly mood summary(to be implemented)");
+                    weeklyMoodSummary(loggedInUser, userManager);
                 }else if(choice.equals("3")){
                     System.out.println("Logged out. Goodbye!");
                     break;
@@ -197,7 +197,64 @@ public class Main {
             System.out.println("Invalid option.");
         }
     }
+    
 }
+    
+    private static void weeklyMoodSummary(
+        User user,
+        UserManager userManager) {
+
+    LocalDate today = LocalDate.now();
+    int positive = 0;
+    int neutral = 0;
+    int negative = 0;
+
+    System.out.println("\n=== Weekly Mood Summary ===");
+
+    for (int i = 0; i < 7; i++) {
+        LocalDate date = today.minusDays(i);
+        File journalFile = userManager.getJournalFile(user, date);
+
+        if (!journalFile.exists()) {
+            continue;
+        }
+
+        String content = "";
+
+        try (Scanner scanner = new Scanner(journalFile)) {
+            while (scanner.hasNextLine()) {
+                content += scanner.nextLine().toLowerCase() + " ";
+            }
+        } catch (Exception e) {
+            continue;
+        }
+
+        if (content.contains("happy")
+                || content.contains("good")
+                || content.contains("great")
+                || content.contains("excited")
+                || content.contains("fun")) {
+            positive++;
+        }
+        else if (content.contains("sad")
+                || content.contains("tired")
+                || content.contains("angry")
+                || content.contains("stress")
+                || content.contains("bad")) {
+            negative++;
+        }
+        else {
+            neutral++;
+        }
+    }
+
+    System.out.println("Positive days: " + positive);
+    System.out.println("Neutral days : " + neutral);
+    System.out.println("Negative days: " + negative);
+    System.out.println("\nPress Enter to go back.");
+    new Scanner(System.in).nextLine();
+}
+
     
     private static ArrayList<LocalDate> getJournalDates(User user) {
 
