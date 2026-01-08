@@ -14,6 +14,8 @@ import smartjournal.model.User;
 import java.util.Scanner;
 import java.io.File;
 import java.time.LocalTime;
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class Main {
 
@@ -43,7 +45,7 @@ public class Main {
 
                 String choice = scanner.nextLine();
                 if (choice.equals("1")){
-                    System.out.println("Journal menu(to be implemented)");
+                    journalMenu(loggedInUser, userManager, scanner);
                 }else if(choice.equals("2")){
                     System.out.println("Weekly mood summary(to be implemented)");
                 }else if(choice.equals("3")){
@@ -91,5 +93,60 @@ public class Main {
 
       System.out.println("\n" + greeting + ", " + user.getDisplayName());
     }
+    
+    private static void journalMenu(User user,UserManager userManager,Scanner scanner){
+         LocalDate today = LocalDate.now();
+         
+          System.out.println("\n=== Journal Dates ===");
+          
+          System.out.println("1. " + today + " (Today)");
+          System.out.println("Select a date to view journal, or create a new journal for today:");
+          System.out.print("> ");
+
+          String choice = scanner.nextLine();
+          if (choice.equals("1")) {
+              handleJournalForDate(user, userManager, scanner, today);
+          }else{
+               System.out.println("Invalid selection.");
+          }
+    }
+    
+    
+    private static void handleJournalForDate(User user, UserManager userManager,Scanner scanner,LocalDate date){
+        File journalFile = userManager.getJournalFile(user, date);
+         if (!journalFile.exists()) {
+             System.out.println("Enter your journal entry for " + date + ":");
+             System.out.print("> ");
+             String entry = scanner.nextLine().trim();
+
+             if (!entry.isEmpty()) {
+               userManager.writeJournalEntry(user, date, entry);
+               System.out.println("Journal saved successfully!");
+             } else {
+                 System.out.println("Empty entry. Nothing saved.");
+             }    
+         }else{
+             System.out.println("1. View Journal");
+             System.out.println("2. Edit Journal");
+             System.out.println("3. Back");
+             System.out.print("> ");
+             
+             String option=scanner.nextLine();
+             if (option.equals("1")) {
+                 userManager.readJournalEntries(user, date);
+             }else if(option.equals("2")){
+                     System.out.println("Edit your journal entry for " + date + ":");
+                     System.out.print("> ");
+                     String newEntry = scanner.nextLine();
+                     userManager.overwriteJournal(user, date, newEntry);
+                     System.out.println("Journal updated successfully!");
+                 
+             }
+
+         }
+    }
+    
 }
+
+
 
