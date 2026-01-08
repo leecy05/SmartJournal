@@ -57,17 +57,7 @@ public class Main {
                 }
             }
             
-            File journalFile = userManager.getJournalFile(loggedInUser);
-            System.out.println("Journal file ready: " + journalFile.getPath());
-            System.out.print("\nWrite your journal entry: ");
-            String entry = scanner.nextLine().trim();
-            if(entry.isEmpty()){
-                System.out.println("Journal entry is empty. Nothing was saved.");
-            }else{
-                userManager.writeJournalEntry(loggedInUser,entry);
-                System.out.println("Journal entry saved.");
-            }
-             userManager.readJournalEntries(loggedInUser);
+            
 
             
             
@@ -112,39 +102,65 @@ public class Main {
     }
     
     
-    private static void handleJournalForDate(User user, UserManager userManager,Scanner scanner,LocalDate date){
-        File journalFile = userManager.getJournalFile(user, date);
-         if (!journalFile.exists()) {
-             System.out.println("Enter your journal entry for " + date + ":");
-             System.out.print("> ");
-             String entry = scanner.nextLine().trim();
+    private static void handleJournalForDate(
+        User user,
+        UserManager userManager,
+        Scanner scanner,
+        LocalDate date) {
 
-             if (!entry.isEmpty()) {
-               userManager.writeJournalEntry(user, date, entry);
-               System.out.println("Journal saved successfully!");
-             } else {
-                 System.out.println("Empty entry. Nothing saved.");
-             }    
-         }else{
-             System.out.println("1. View Journal");
-             System.out.println("2. Edit Journal");
-             System.out.println("3. Back");
-             System.out.print("> ");
-             
-             String option=scanner.nextLine();
-             if (option.equals("1")) {
-                 userManager.readJournalEntries(user, date);
-             }else if(option.equals("2")){
-                     System.out.println("Edit your journal entry for " + date + ":");
-                     System.out.print("> ");
-                     String newEntry = scanner.nextLine();
-                     userManager.overwriteJournal(user, date, newEntry);
-                     System.out.println("Journal updated successfully!");
-                 
-             }
+    File journalFile = userManager.getJournalFile(user, date);
 
-         }
+    // CASE 1: No journal yet → CREATE
+    if (!journalFile.exists()) {
+
+        System.out.println("No journal found for today.");
+        System.out.println("Create journal for " + date + ":");
+        System.out.print("> ");
+
+        String entry = scanner.nextLine().trim();
+
+        if (!entry.isEmpty()) {
+            userManager.writeJournalEntry(user, date, entry);
+            System.out.println("Journal saved successfully!");
+        } else {
+            System.out.println("Empty entry. Nothing saved.");
+        }
+        return;
     }
+
+    // CASE 2: Journal exists → VIEW / EDIT
+    while (true) {
+        System.out.println("\n1. View Journal");
+        System.out.println("2. Edit Journal");
+        System.out.println("3. Back");
+        System.out.print("> ");
+
+        String option = scanner.nextLine();
+
+        if (option.equals("1")) {
+            userManager.readJournalEntries(user, date);
+        }
+        else if (option.equals("2")) {
+            System.out.println("Edit your journal entry for " + date + ":");
+            System.out.print("> ");
+            String newEntry = scanner.nextLine().trim();
+
+            if (!newEntry.isEmpty()) {
+                userManager.overwriteJournal(user, date, newEntry);
+                System.out.println("Journal updated successfully!");
+            } else {
+                System.out.println("Empty entry. Nothing saved.");
+            }
+        }
+        else if (option.equals("3")) {
+            break;
+        }
+        else {
+            System.out.println("Invalid option.");
+        }
+    }
+}
+
     
 }
 
