@@ -84,22 +84,47 @@ public class Main {
       System.out.println("\n" + greeting + ", " + user.getDisplayName());
     }
     
-    private static void journalMenu(User user,UserManager userManager,Scanner scanner){
-         LocalDate today = LocalDate.now();
-         
-          System.out.println("\n=== Journal Dates ===");
-          
-          System.out.println("1. " + today + " (Today)");
-          System.out.println("Select a date to view journal, or create a new journal for today:");
-          System.out.print("> ");
+    private static void journalMenu(
+        User user,
+        UserManager userManager,
+        Scanner scanner) {
 
-          String choice = scanner.nextLine();
-          if (choice.equals("1")) {
-              handleJournalForDate(user, userManager, scanner, today);
-          }else{
-               System.out.println("Invalid selection.");
-          }
+    LocalDate today = LocalDate.now();
+    ArrayList<LocalDate> dates = getJournalDates(user);
+
+    if (!dates.contains(today)) {
+        dates.add(today);
     }
+
+    dates.sort(LocalDate::compareTo);
+
+    System.out.println("\n=== Journal Dates ===");
+
+    for (int i = 0; i < dates.size(); i++) {
+        LocalDate date = dates.get(i);
+        if (date.equals(today)) {
+            System.out.println((i + 1) + ". " + date + " (Today)");
+        } else {
+            System.out.println((i + 1) + ". " + date);
+        }
+    }
+
+    System.out.println("Select a date to view journal, or create/edit today's journal:");
+    System.out.print("> ");
+
+    try {
+        int choice = Integer.parseInt(scanner.nextLine());
+        if (choice >= 1 && choice <= dates.size()) {
+            LocalDate selectedDate = dates.get(choice - 1);
+            handleJournalForDate(user, userManager, scanner, selectedDate);
+        } else {
+            System.out.println("Invalid selection.");
+        }
+    } catch (NumberFormatException e) {
+        System.out.println("Invalid input.");
+    }
+}
+
     
     
     private static void handleJournalForDate(
@@ -109,8 +134,21 @@ public class Main {
         LocalDate date) {
 
     File journalFile = userManager.getJournalFile(user, date);
+    LocalDate today = LocalDate.now();
 
-    // CASE 1: No journal yet → CREATE
+    // ===== PAST DATE → VIEW ONLY =====
+    if (date.isBefore(today)) {
+
+        if (!journalFile.exists()) {
+            System.out.println("No journal entry for " + date + ".");
+            return;
+        }
+
+        userManager.readJournalEntries(user, date);
+        return;
+    }
+
+    // ===== TODAY =====
     if (!journalFile.exists()) {
 
         System.out.println("No journal found for today.");
@@ -128,7 +166,7 @@ public class Main {
         return;
     }
 
-    // CASE 2: Journal exists → VIEW / EDIT
+    // ===== TODAY: VIEW / EDIT =====
     while (true) {
         System.out.println("\n1. View Journal");
         System.out.println("2. Edit Journal");
@@ -160,9 +198,44 @@ public class Main {
         }
     }
 }
+    
+    private static ArrayList<LocalDate> getJournalDates(User user) {
+
+    ArrayList<LocalDate> dates = new ArrayList<>();
+
+    File userFolder = new File("data/journals/" + user.getEmail());
+
+    if (!userFolder.exists()) {
+        return dates;
+    }
+
+    File[] files = userFolder.listFiles();
+
+    if (files == null) {
+        return dates;
+    }
+
+    for (File file : files) {
+        String name = file.getName(); // e.g. 2026-01-08.txt
+
+        if (name.endsWith(".txt")) {
+            String datePart = name.replace(".txt", "");
+            try {
+                dates.add(LocalDate.parse(datePart));
+            } catch (Exception e) {
+                // Ignore invalid filenames
+            }
+        }
+    }
+
+    return dates;
+}
 
     
 }
+
+    
+
 
 
 
