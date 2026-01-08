@@ -20,6 +20,7 @@ import java.io.FileWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import java.time.LocalDate;
 
 
 public class UserManager {
@@ -89,7 +90,7 @@ public class UserManager {
         return journalFile;
     }
     
-    public void writeJournalEntry(User user, String entry) {
+    public void writeJournalEntry(User user,LocalDate date, String entry) {
 
       File journalFile = getJournalFile(user);
 
@@ -133,7 +134,48 @@ public class UserManager {
             } catch (FileNotFoundException e) {
                  System.out.println("ERROR: Unable to read journal file.");
               }
-       }   
+       }
+       
+       public File getJournalFile(User user, LocalDate date) {
+
+         File userFolder = new File("data/journals/" + user.getEmail());
+
+         if (!userFolder.exists()) {
+           userFolder.mkdirs();
+         }
+
+         return new File(userFolder, date.toString() + ".txt");
+       }
+       
+       public void overwriteJournal(User user, LocalDate date, String entry) {
+            writeJournalEntry(user, date, entry);
+       }
+       
+       public void readJournalEntries(User user, LocalDate date) {
+
+          File journalFile = getJournalFile(user, date);
+
+          try (Scanner scanner = new Scanner(journalFile)) {
+
+             System.out.println("\n=== Journal Entry for " + date + " ===");
+
+             while (scanner.hasNextLine()) {
+                System.out.println(scanner.nextLine());
+             }
+
+             System.out.println("\nPress Enter to go back.");
+             new Scanner(System.in).nextLine();
+
+          } catch (FileNotFoundException e) {
+               System.out.println("Journal not found.");
+    }
+}
+
+    public void writeJournalEntry(User loggedInUser, String entry) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+
 }
 
     
