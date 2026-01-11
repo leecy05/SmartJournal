@@ -11,7 +11,11 @@ package smartjournal;
 
 import smartjournal.manager.UserManager;
 import smartjournal.model.User;
+import smartjournal.service.Weather;
+import smartjournal.service.Sentiment;
+
 import java.util.Scanner;
+
 import java.io.File;
 import java.time.LocalTime;
 import java.time.LocalDate;
@@ -56,11 +60,7 @@ public class Main {
                       System.out.println("Invalid option. Please try again.");
                 }
             }
-            
-            
-
-            
-            
+             
         } else {
             System.out.println("\nLogin failed!");
             System.out.println("Invalid email or password.");
@@ -158,7 +158,20 @@ public class Main {
         String entry = scanner.nextLine().trim();
 
         if (!entry.isEmpty()) {
-            userManager.writeJournalEntry(user, date, entry);
+            System.out.println("Fetching weather data and analyzing mood....");
+            // Weather
+            Weather weatherService = new Weather();
+            String weather = weatherService.getCurrentWeather();
+
+            // Sentiment
+            Sentiment moodSentiment = new Sentiment();
+            String mood = moodSentiment.analyze(entry);
+
+            System.out.println("Done! (" + weather + ", Mood: " + mood + ")");
+
+            String finalEntry = "Location Weather: " + weather + "\n" + "Mood Analysis: " + mood + "\n" + "_______________________\n" + entry;
+
+            userManager.writeJournalEntry(user, date, finalEntry);
             System.out.println("Journal saved successfully!");
         } else {
             System.out.println("Empty entry. Nothing saved.");
@@ -198,7 +211,7 @@ public class Main {
         }
     }
     
-}
+ }
     
     private static void weeklyMoodSummary(
         User user,
@@ -253,6 +266,7 @@ public class Main {
     System.out.println("Negative days: " + negative);
     System.out.println("\nPress Enter to go back.");
     new Scanner(System.in).nextLine();
+
 }
 
     
