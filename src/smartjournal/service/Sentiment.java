@@ -9,7 +9,7 @@ import java.time.Duration;
 
 public class Sentiment {
 
-   private static final String API_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english";
+   private static final String API_URL = "https://api.mood-tracker.ninjagiraffes.co.uk/";
    private static final String API_TOKEN = "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";
 
    public String analyze(String text) {

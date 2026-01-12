@@ -119,6 +119,9 @@ public class JournalApp {
       JButton logoutButton = new JButton("Logout");
       logoutButton.setBackground(Color.decode("#e74c3c"));
       logoutButton.setForeground(Color.WHITE);
+      logoutButton.setContentAreaFilled(true);
+      logoutButton.setOpaque(true);
+      logoutButton.setBorderPainted(false);
       logoutButton.addActionListener(e -> {
          loggedInUser = null;
          initLoginScreen(); // Go back to login
@@ -154,6 +157,9 @@ public class JournalApp {
       JButton saveButton = new JButton("Save Entry with AI Analysis");
       saveButton.setBackground(Color.decode("#27ae60"));
       saveButton.setForeground(Color.WHITE);
+      saveButton.setContentAreaFilled(true);
+      saveButton.setOpaque(true);
+      saveButton.setBorderPainted(false);
       saveButton.setFont(new Font("Arial", Font.BOLD, 14));
       
       JLabel aiStatusLabel = new JLabel("Ready to save.");
@@ -202,11 +208,11 @@ public class JournalApp {
 
          // 2. Get Sentiment
          Sentiment sentimentService = new Sentiment();
-         String mood = sentimentService.analyze(text);
+         String sentiment = sentimentService.analyze(text);
 
          // 3. Format & Save
          String finalEntry = "Location Weather: " + weather + "\n" +
-                              "Mood Analysis: " + mood + "\n" +
+                              "Mood Analysis: " + sentiment + "\n" +
                               "_______________________\n" +
                               text;
 
@@ -214,7 +220,7 @@ public class JournalApp {
 
          // Update GUI (Must be done on Swing Event Dispatch Thread)
          SwingUtilities.invokeLater(() -> {
-               statusLabel.setText("Saved! Weather: " + weather + " | Mood: " + mood);
+               statusLabel.setText("Saved! Weather: " + weather + " | Mood: " + sentiment);
                statusLabel.setForeground(Color.decode("#008000")); // Green
                saveButton.setEnabled(true);
          });
