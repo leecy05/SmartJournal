@@ -1,0 +1,4 @@
+Location Weather: Kuala Lumpur: Cool and breezy, 24°C (feels like 26°C, min 23°C, max 28°C)
+Mood Analysis: very positive
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hi, im happy today cuz i managed to solve the weather and sentiment API.

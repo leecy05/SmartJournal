@@ -1,4 +1,0 @@
-Location Weather: Weather Error (301)
-Mood Analysis: unknown
-_______________________
-Happy, Sad, Excited, good, fun
