@@ -2,245 +2,469 @@ package smartjournal;
 
 import smartjournal.manager.UserManager;
 import smartjournal.model.User;
-import smartjournal.service.Sentiment;
 import smartjournal.service.Weather;
+import smartjournal.service.Sentiment;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Scanner;
 
-public class JournalApp {
-
-   private UserManager userManager = new UserManager();
-   private User loggedInUser;
-
-   // UI Components
-   private JFrame mainFrame;
-
-   public JournalApp() {
-      // Initialize the Main Window (Frame)
-      mainFrame = new JFrame("SmartJournal Projects");
-      mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      mainFrame.setSize(600, 600);
-      mainFrame.setLocationRelativeTo(null); // Center on screen
-
-      // Start with Login Screen
-      initLoginScreen();
-
-      mainFrame.setVisible(true);
-   }
-
-   // SCREEN 1: THE LOGIN PAGE
-   private void initLoginScreen() {
-      // Main Panel with Vertical Layout
-      JPanel loginPanel = new JPanel();
-      loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
-      loginPanel.setBackground(Color.decode("#f0f4f8")); // Light Blue-Grey
-      loginPanel.setBorder(new EmptyBorder(50, 50, 50, 50)); // Padding
-
-      // Title
-      JLabel titleLabel = new JLabel("Smart Journal");
-      titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-      titleLabel.setForeground(Color.decode("#2c3e50"));
-      titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-      // Inputs
-      JTextField emailField = new JTextField(20);
-      emailField.setMaximumSize(new Dimension(300, 35));
-      
-      JPasswordField passField = new JPasswordField(20);
-      passField.setMaximumSize(new Dimension(300, 35));
-
-      JLabel emailLabel = new JLabel("Email:");
-      emailLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-      JLabel passLabel = new JLabel("Password:");
-      passLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-      // Login Button
-      JButton loginButton = new JButton("Login");
-      loginButton.setBackground(Color.decode("#ffffff"));
-      loginButton.setForeground(Color.BLACK);
-      loginButton.setFont(new Font("Arial", Font.BOLD, 14));
-      loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-      
-      // Status Label
-      JLabel statusLabel = new JLabel(" ");
-      statusLabel.setForeground(Color.RED);
-      statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-      // Add Spacing and Components
-      loginPanel.add(Box.createVerticalGlue()); // Push to center
-      loginPanel.add(titleLabel);
-      loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-      loginPanel.add(emailLabel);
-      loginPanel.add(emailField);
-      loginPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-      loginPanel.add(passLabel);
-      loginPanel.add(passField);
-      loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-      loginPanel.add(loginButton);
-      loginPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-      loginPanel.add(statusLabel);
-      loginPanel.add(Box.createVerticalGlue());
-
-      // Action: When Login is Clicked
-      loginButton.addActionListener(e -> {
-         String email = emailField.getText().trim();
-         String password = new String(passField.getPassword()).trim();
-
-         User user = userManager.authenticate(email, password);
-
-         if (user != null) {
-               loggedInUser = user;
-               initMainScreen(); // Switch to main screen
-         } else {
-               statusLabel.setText("Invalid credentials. Try again.");
-         }
-      });
-
-      // Switch the frame content
-      switchContent(loginPanel);
-   }
-
-   // SCREEN 2: THE DASHBOARD (Journal Entry)
-   private void initMainScreen() {
-      JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
-      mainPanel.setBackground(Color.WHITE);
-      mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-      // --- TOP HEADER ---
-      JPanel headerPanel = new JPanel(new BorderLayout());
-      headerPanel.setBackground(Color.WHITE);
-
-      JLabel welcomeLabel = new JLabel("Welcome, " + loggedInUser.getDisplayName());
-      welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
-
-      JButton logoutButton = new JButton("Logout");
-      logoutButton.setBackground(Color.decode("#e74c3c"));
-      logoutButton.setForeground(Color.WHITE);
-      logoutButton.setContentAreaFilled(true);
-      logoutButton.setOpaque(true);
-      logoutButton.setBorderPainted(false);
-      logoutButton.addActionListener(e -> {
-         loggedInUser = null;
-         initLoginScreen(); // Go back to login
-      });
-
-      headerPanel.add(welcomeLabel, BorderLayout.WEST);
-      headerPanel.add(logoutButton, BorderLayout.EAST);
-      mainPanel.add(headerPanel, BorderLayout.NORTH);
-
-      // --- CENTER: JOURNAL AREA ---
-      JPanel centerPanel = new JPanel(new BorderLayout(0, 10));
-      centerPanel.setBackground(Color.WHITE);
-
-      JLabel dateLabel = new JLabel("Today's Entry (" + LocalDate.now() + ")");
-      dateLabel.setForeground(Color.GRAY);
-
-      JTextArea journalArea = new JTextArea();
-      journalArea.setLineWrap(true);
-      journalArea.setWrapStyleWord(true);
-      journalArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
-      
-      // Wrap TextArea in ScrollPane (Essential for Swing)
-      JScrollPane scrollPane = new JScrollPane(journalArea);
-
-      centerPanel.add(dateLabel, BorderLayout.NORTH);
-      centerPanel.add(scrollPane, BorderLayout.CENTER);
-      mainPanel.add(centerPanel, BorderLayout.CENTER);
-
-      // --- BOTTOM: ACTIONS ---
-      JPanel bottomPanel = new JPanel(new BorderLayout(0, 10));
-      bottomPanel.setBackground(Color.WHITE);
-
-      JButton saveButton = new JButton("Save Entry with AI Analysis");
-      saveButton.setBackground(Color.decode("#27ae60"));
-      saveButton.setForeground(Color.WHITE);
-      saveButton.setContentAreaFilled(true);
-      saveButton.setOpaque(true);
-      saveButton.setBorderPainted(false);
-      saveButton.setFont(new Font("Arial", Font.BOLD, 14));
-      
-      JLabel aiStatusLabel = new JLabel("Ready to save.");
-      aiStatusLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-      aiStatusLabel.setForeground(Color.decode("#555555"));
-
-      saveButton.addActionListener(e -> {
-         String text = journalArea.getText().trim();
-         if (text.isEmpty()) {
-               aiStatusLabel.setText("Please write something first!");
-               return;
-         }
-
-         // Disable button
-         saveButton.setEnabled(false);
-         aiStatusLabel.setText("Connecting to Satellite & AI Brain... (Please wait)");
-
-         // Run API calls in a separate thread
-         new Thread(() -> {
-               saveJournalLogic(text, aiStatusLabel, saveButton);
-         }).start();
-      });
-
-      bottomPanel.add(saveButton, BorderLayout.NORTH);
-      bottomPanel.add(aiStatusLabel, BorderLayout.SOUTH);
-      mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-      // Switch the frame content
-      switchContent(mainPanel);
-   }
-
-   // Helper to switch screens
-   private void switchContent(JPanel panel) {
-      mainFrame.getContentPane().removeAll();
-      mainFrame.getContentPane().add(panel);
-      mainFrame.revalidate(); // Recalculate layout
-      mainFrame.repaint();    // Redraw
-   }
-
-   // LOGIC: CONNECTING GUI TO BACKEND
-   private void saveJournalLogic(String text, JLabel statusLabel, JButton saveButton) {
-      try {
-         // 1. Get Weather
-         Weather weatherService = new Weather();
-         String weather = weatherService.getCurrentWeather();
-
-         // 2. Get Sentiment
-         Sentiment sentimentService = new Sentiment();
-         String sentiment = sentimentService.analyze(text);
-
-         // 3. Format & Save
-         String finalEntry = "Location Weather: " + weather + "\n" +
-                              "Mood Analysis: " + sentiment + "\n" +
-                              "_______________________\n" +
-                              text;
-
-         userManager.writeJournalEntry(loggedInUser, LocalDate.now(), finalEntry);
-
-         // Update GUI (Must be done on Swing Event Dispatch Thread)
-         SwingUtilities.invokeLater(() -> {
-               statusLabel.setText("Saved! Weather: " + weather + " | Mood: " + sentiment);
-               statusLabel.setForeground(Color.decode("#008000")); // Green
-               saveButton.setEnabled(true);
-         });
-
-      } catch (Exception ex) {
-         ex.printStackTrace(); // Good for debugging
-         SwingUtilities.invokeLater(() -> {
-               statusLabel.setText("Error saving journal.");
-               saveButton.setEnabled(true);
-         });
-      }
-   }
-
-   public static void main(String[] args) {
-      // Optional: Make it look like the native OS (Windows/Mac) instead of old Java style
-      try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      } catch (Exception ignored) {}
-
-      // Start the app on the Swing Event Thread
-      SwingUtilities.invokeLater(() -> new JournalApp());
-   }
+public class JournalApp extends JFrame {
+    
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
+    private static final Color PRIMARY = new Color(79, 70, 229);
+    private static final Color SECONDARY = new Color(249, 250, 251);
+    private static final Color ACCENT = new Color(16, 185, 129);
+    
+    private UserManager userManager;
+    private User loggedInUser;
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+    private JPanel loginPanel, menuPanel, journalPanel, statsPanel;
+    
+    public JournalApp() {
+        userManager = new UserManager();
+        setTitle("Smart Journal App");
+        setSize(900, 700);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+        
+        createLoginPanel();
+        createMenuPanel();
+        createJournalPanel();
+        createStatsPanel();
+        
+        add(mainPanel);
+        cardLayout.show(mainPanel, "login");
+        setVisible(true);
+    }
+    
+    private void createLoginPanel() {
+        loginPanel = new JPanel(new GridBagLayout());
+        loginPanel.setBackground(SECONDARY);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        
+        JLabel title = new JLabel("📔 Smart Journal");
+        title.setFont(new Font("Arial", Font.BOLD, 36));
+        title.setForeground(PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        loginPanel.add(title, gbc);
+        
+        JLabel subtitle = new JLabel("Your Personal Digital Diary");
+        subtitle.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridy = 1;
+        loginPanel.add(subtitle, gbc);
+        
+        gbc.gridwidth = 1; gbc.gridy = 2; gbc.gridx = 0;
+        loginPanel.add(new JLabel("Email:"), gbc);
+        
+        JTextField emailField = new JTextField(20);
+        emailField.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridx = 1;
+        loginPanel.add(emailField, gbc);
+        
+        gbc.gridy = 3; gbc.gridx = 0;
+        loginPanel.add(new JLabel("Password:"), gbc);
+        
+        JPasswordField passField = new JPasswordField(20);
+        gbc.gridx = 1;
+        loginPanel.add(passField, gbc);
+        
+        JButton loginBtn = new JButton("Login");
+        loginBtn.setBackground(PRIMARY);
+        loginBtn.setForeground(Color.WHITE);
+        loginBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        loginBtn.setFocusPainted(false);
+        gbc.gridy = 4; gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        loginPanel.add(loginBtn, gbc);
+        
+        JLabel status = new JLabel(" ");
+        gbc.gridy = 5;
+        loginPanel.add(status, gbc);
+        
+        loginBtn.addActionListener(e -> {
+            loggedInUser = userManager.authenticate(
+                emailField.getText().trim(),
+                new String(passField.getPassword()).trim()
+            );
+            
+            if (loggedInUser != null) {
+                status.setForeground(ACCENT);
+                status.setText("✓ Login successful!");
+                updateMenuPanel();
+                cardLayout.show(mainPanel, "menu");
+            } else {
+                status.setForeground(Color.RED);
+                status.setText("✗ Invalid credentials");
+            }
+        });
+        
+        mainPanel.add(loginPanel, "login");
+    }
+    
+    private void createMenuPanel() {
+        menuPanel = new JPanel(new BorderLayout());
+        menuPanel.setBackground(Color.WHITE);
+        
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(PRIMARY);
+        header.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel welcome = new JLabel("Welcome!");
+        welcome.setFont(new Font("Arial", Font.BOLD, 28));
+        welcome.setForeground(Color.WHITE);
+        header.add(welcome, BorderLayout.NORTH);
+        
+        JLabel date = new JLabel(LocalDate.now().format(DATE_FORMATTER));
+        date.setFont(new Font("Arial", Font.PLAIN, 16));
+        date.setForeground(Color.WHITE);
+        header.add(date, BorderLayout.CENTER);
+        
+        menuPanel.add(header, BorderLayout.NORTH);
+        
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.insets = new Insets(10, 0, 10, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        JButton journalBtn = createMenuButton("📝 My Journals", "Create, view, and edit entries");
+        journalBtn.addActionListener(e -> {
+            updateJournalPanel();
+            cardLayout.show(mainPanel, "journal");
+        });
+        gbc.gridy = 0;
+        center.add(journalBtn, gbc);
+        
+        JButton statsBtn = createMenuButton("📊 Mood Statistics", "View weekly mood summary");
+        statsBtn.addActionListener(e -> {
+            updateStatsPanel();
+            cardLayout.show(mainPanel, "stats");
+        });
+        gbc.gridy = 1;
+        center.add(statsBtn, gbc);
+        
+        JButton logoutBtn = createMenuButton("🚪 Logout", "Exit application");
+        logoutBtn.addActionListener(e -> {
+            if (JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", 
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                cardLayout.show(mainPanel, "login");
+            }
+        });
+        gbc.gridy = 2;
+        center.add(logoutBtn, gbc);
+        
+        menuPanel.add(center, BorderLayout.CENTER);
+        mainPanel.add(menuPanel, "menu");
+    }
+    
+    private JButton createMenuButton(String title, String desc) {
+        JButton btn = new JButton(
+            "<html><b>" + title + "</b><br><small>" + desc + "</small></html>"
+        );
+        btn.setPreferredSize(new Dimension(400, 70));
+        btn.setFont(new Font("Arial", Font.PLAIN, 14));
+        btn.setBackground(Color.WHITE);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(PRIMARY, 2),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        btn.setFocusPainted(false);
+        return btn;
+    }
+    
+    private void createJournalPanel() {
+        journalPanel = new JPanel(new BorderLayout());
+        journalPanel.setBackground(Color.WHITE);
+        mainPanel.add(journalPanel, "journal");
+    }
+    
+    private void updateJournalPanel() {
+        journalPanel.removeAll();
+        
+        JPanel header = createHeader("📝 My Journals", "Select a date");
+        journalPanel.add(header, BorderLayout.NORTH);
+        
+        JPanel center = new JPanel(new BorderLayout());
+        center.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        ArrayList<LocalDate> dates = getJournalDates();
+        LocalDate today = LocalDate.now();
+        if (!dates.contains(today)) dates.add(today);
+        dates.sort((d1, d2) -> d2.compareTo(d1));
+        
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (LocalDate d : dates) {
+            model.addElement(d.format(DATE_FORMATTER) + (d.equals(today) ? " (Today)" : ""));
+        }
+        
+        JList<String> list = new JList<>(model);
+        list.setFont(new Font("Arial", Font.PLAIN, 16));
+        center.add(new JScrollPane(list), BorderLayout.CENTER);
+        
+        JPanel btnPanel = new JPanel();
+        JButton viewBtn = new JButton("View/Edit");
+        viewBtn.addActionListener(e -> {
+            int idx = list.getSelectedIndex();
+            if (idx >= 0) showJournalEntry(dates.get(idx));
+        });
+        btnPanel.add(viewBtn);
+        
+        JButton backBtn = new JButton("Back");
+        backBtn.addActionListener(e -> cardLayout.show(mainPanel, "menu"));
+        btnPanel.add(backBtn);
+        
+        center.add(btnPanel, BorderLayout.SOUTH);
+        journalPanel.add(center, BorderLayout.CENTER);
+        journalPanel.revalidate();
+        journalPanel.repaint();
+    }
+    
+    private void showJournalEntry(LocalDate date) {
+        File file = userManager.getJournalFile(loggedInUser, date);
+        if (date.isBefore(LocalDate.now())) {
+            if (file.exists()) viewJournal(date);
+        } else {
+            if (!file.exists()) createJournal(date);
+            else editJournal(date);
+        }
+    }
+    
+    private void createJournal(LocalDate date) {
+        JDialog dlg = new JDialog(this, "Create Entry", true);
+        dlg.setSize(600, 400);
+        dlg.setLocationRelativeTo(this);
+        dlg.setLayout(new BorderLayout());
+        
+        JTextArea area = new JTextArea();
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setFont(new Font("Arial", Font.PLAIN, 14));
+        dlg.add(new JScrollPane(area), BorderLayout.CENTER);
+        
+        JPanel btnPanel = new JPanel();
+        JButton save = new JButton("Save");
+        save.addActionListener(e -> {
+            String text = area.getText().trim();
+            if (!text.isEmpty()) {
+                Weather w = new Weather();
+                Sentiment s = new Sentiment();
+                String entry = String.format("Weather: %s\nMood: %s\n%s\n%s",
+                    w.getCurrentWeather(), s.analyze(text), "─".repeat(40), text);
+                userManager.writeJournalEntry(loggedInUser, date, entry);
+                JOptionPane.showMessageDialog(dlg, "Saved!");
+                dlg.dispose();
+                updateJournalPanel();
+            }
+        });
+        btnPanel.add(save);
+        
+        JButton cancel = new JButton("Cancel");
+        cancel.addActionListener(e -> dlg.dispose());
+        btnPanel.add(cancel);
+        
+        dlg.add(btnPanel, BorderLayout.SOUTH);
+        dlg.setVisible(true);
+    }
+    
+    private void viewJournal(LocalDate date) {
+        JDialog dlg = new JDialog(this, "View Entry", true);
+        dlg.setSize(600, 400);
+        dlg.setLocationRelativeTo(this);
+        dlg.setLayout(new BorderLayout());
+        
+        StringBuilder content = new StringBuilder();
+        try (Scanner sc = new Scanner(userManager.getJournalFile(loggedInUser, date))) {
+            while (sc.hasNextLine()) content.append(sc.nextLine()).append("\n");
+        } catch (Exception e) {}
+        
+        JTextArea area = new JTextArea(content.toString());
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setFont(new Font("Arial", Font.PLAIN, 14));
+        dlg.add(new JScrollPane(area), BorderLayout.CENTER);
+        
+        JButton close = new JButton("Close");
+        close.addActionListener(e -> dlg.dispose());
+        JPanel p = new JPanel();
+        p.add(close);
+        dlg.add(p, BorderLayout.SOUTH);
+        
+        dlg.setVisible(true);
+    }
+    
+    private void editJournal(LocalDate date) {
+        JDialog dlg = new JDialog(this, "Edit Entry", true);
+        dlg.setSize(600, 400);
+        dlg.setLocationRelativeTo(this);
+        dlg.setLayout(new BorderLayout());
+        
+        JTextArea area = new JTextArea();
+        area.setLineWrap(true);
+        area.setFont(new Font("Arial", Font.PLAIN, 14));
+        dlg.add(new JScrollPane(area), BorderLayout.CENTER);
+        
+        JPanel btnPanel = new JPanel();
+        JButton save = new JButton("Save");
+        save.addActionListener(e -> {
+            String text = area.getText().trim();
+            if (!text.isEmpty()) {
+                Weather w = new Weather();
+                Sentiment s = new Sentiment();
+                String entry = String.format("Weather: %s\nMood: %s\n%s\n%s",
+                    w.getCurrentWeather(), s.analyze(text), "─".repeat(40), text);
+                userManager.overwriteJournal(loggedInUser, date, entry);
+                JOptionPane.showMessageDialog(dlg, "Updated!");
+                dlg.dispose();
+                updateJournalPanel();
+            }
+        });
+        btnPanel.add(save);
+        
+        JButton cancel = new JButton("Cancel");
+        cancel.addActionListener(e -> dlg.dispose());
+        btnPanel.add(cancel);
+        
+        dlg.add(btnPanel, BorderLayout.SOUTH);
+        dlg.setVisible(true);
+    }
+    
+    private void createStatsPanel() {
+        statsPanel = new JPanel(new BorderLayout());
+        statsPanel.setBackground(Color.WHITE);
+        mainPanel.add(statsPanel, "stats");
+    }
+    
+    private void updateStatsPanel() {
+        statsPanel.removeAll();
+        
+        JPanel header = createHeader("📊 Weekly Mood", "Last 7 days");
+        statsPanel.add(header, BorderLayout.NORTH);
+        
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
+        
+        int[] moods = new int[6];
+        int total = 0;
+        
+        for (int i = 0; i < 7; i++) {
+            LocalDate d = LocalDate.now().minusDays(i);
+            File f = userManager.getJournalFile(loggedInUser, d);
+            if (!f.exists()) continue;
+            
+            total++;
+            try (Scanner sc = new Scanner(f)) {
+                StringBuilder txt = new StringBuilder();
+                while (sc.hasNextLine()) txt.append(sc.nextLine().toLowerCase()).append(" ");
+                String mood = new Sentiment().analyze(txt.toString());
+                switch (mood) {
+                    case "very positive": moods[0]++; break;
+                    case "positive": moods[1]++; break;
+                    case "mixed": moods[2]++; break;
+                    case "negative": moods[3]++; break;
+                    case "very negative": moods[4]++; break;
+                    default: moods[5]++; break;
+                }
+            } catch (Exception e) {}
+        }
+        
+        if (total == 0) {
+            center.add(new JLabel("No entries found"));
+        } else {
+            String[] labels = {"😄 Very Positive", "😊 Positive", "😐 Mixed", 
+                              "😔 Negative", "😢 Very Negative", "😶 Neutral"};
+            for (int i = 0; i < moods.length; i++) {
+                if (moods[i] > 0) {
+                    int pct = moods[i] * 100 / total;
+                    center.add(new JLabel(labels[i] + ": " + moods[i] + " (" + pct + "%)"));
+                    center.add(Box.createVerticalStrut(10));
+                }
+            }
+        }
+        
+        statsPanel.add(new JScrollPane(center), BorderLayout.CENTER);
+        
+        JButton back = new JButton("Back");
+        back.addActionListener(e -> cardLayout.show(mainPanel, "menu"));
+        JPanel p = new JPanel();
+        p.add(back);
+        statsPanel.add(p, BorderLayout.SOUTH);
+        
+        statsPanel.revalidate();
+        statsPanel.repaint();
+    }
+    
+    private JPanel createHeader(String title, String sub) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(PRIMARY);
+        p.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel t = new JLabel(title);
+        t.setFont(new Font("Arial", Font.BOLD, 24));
+        t.setForeground(Color.WHITE);
+        p.add(t, BorderLayout.NORTH);
+        
+        JLabel s = new JLabel(sub);
+        s.setFont(new Font("Arial", Font.PLAIN, 14));
+        s.setForeground(Color.WHITE);
+        p.add(s, BorderLayout.CENTER);
+        
+        return p;
+    }
+    
+    private ArrayList<LocalDate> getJournalDates() {
+        ArrayList<LocalDate> dates = new ArrayList<>();
+        File folder = new File("data/journals/" + loggedInUser.getEmail());
+        if (!folder.exists()) return dates;
+        
+        File[] files = folder.listFiles();
+        if (files == null) return dates;
+        
+        for (File f : files) {
+            if (f.getName().endsWith(".txt")) {
+                try {
+                    dates.add(LocalDate.parse(f.getName().replace(".txt", "")));
+                } catch (Exception e) {}
+            }
+        }
+        return dates;
+    }
+    
+    private void updateMenuPanel() {
+        if (loggedInUser == null) return;
+        Component[] comps = menuPanel.getComponents();
+        for (Component c : comps) {
+            if (c instanceof JPanel && ((JPanel)c).getBackground().equals(PRIMARY)) {
+                JPanel p = (JPanel)c;
+                for (Component cc : p.getComponents()) {
+                    if (cc instanceof JLabel) {
+                        JLabel lbl = (JLabel)cc;
+                        if (lbl.getFont().getSize() == 28) {
+                            LocalTime now = LocalTime.now();
+                            String greeting = now.isBefore(LocalTime.NOON) ? "Good Morning" :
+                                            now.isBefore(LocalTime.of(17, 0)) ? "Good Afternoon" :
+                                            "Good Evening";
+                            lbl.setText(greeting + ", " + loggedInUser.getDisplayName() + "!");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new JournalApp());
+    }
 }
